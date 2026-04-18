@@ -18,12 +18,8 @@ export class BulkResizePage extends BasePage {
     this.selectImagesButton = page.getByRole('button', { name: /select images/i });
     this.fileInput = page.locator('input[type="file"]').first();
     this.clearButton = page.getByRole('button', { name: /clear/i });
-    this.widthInput = page.locator('input').filter({ has: page.locator('text=/width/i') }).or(
-      page.locator('label:has-text("Width") + input')
-    ).first();
-    this.heightInput = page.locator('input').filter({ has: page.locator('text=/height/i') }).or(
-      page.locator('label:has-text("Height") + input')
-    ).first();
+    this.widthInput = page.getByPlaceholder('Width').first();
+    this.heightInput = page.getByPlaceholder('Height').first();
     this.keepAspectCheckbox = page.locator('input[type="checkbox"]').first();
     this.processDownloadButton = page.getByRole('button', { name: /process.*download/i });
     this.filesList = page.locator('text=/Screenshot.*png|.*jpg|.*webp/').first();

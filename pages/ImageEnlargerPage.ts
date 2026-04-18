@@ -20,8 +20,9 @@ export class ImageEnlargerPage extends BasePage {
     this.clearButton = page.getByRole('button', { name: /clear/i });
     this.scaleSlider = page.locator('input[type="range"]').first();
     this.downloadButton = page.getByRole('button', { name: /download png/i });
-    this.originalDimensionsText = page.locator('text=/Original:.*×.*/');
-    this.newDimensionsText = page.locator('text=/New:.*×.*/');
+    // Both dimensions are in the same element: "Original: WxH → New: WxH"
+    this.originalDimensionsText = page.locator('text=/Original:.*×.*/').first();
+    this.newDimensionsText = page.locator('text=/Original:.*→.*New:.*×.*/').first();
     this.previewSection = page.locator('text=Preview').first();
   }
 
@@ -31,23 +32,20 @@ export class ImageEnlargerPage extends BasePage {
 
   async uploadImage(filePath: string) {
     await this.fileInput.setInputFiles(filePath);
-    await this.page.waitForTimeout(1000); // Wait for upload processing
+    await this.page.waitForTimeout(1000);
   }
 
   async verifyUploadSuccess() {
-    // After successful upload, the original dimensions should be visible
     await this.originalDimensionsText.waitFor({ state: 'visible', timeout: 5000 });
   }
 
   async verifyUploadFailure() {
-    // Upload area should still show the initial state
     await this.uploadArea.waitFor({ state: 'visible', timeout: 3000 });
   }
 
   async setScale(percentage: number) {
-    // Slider typically works with value attribute
     await this.scaleSlider.fill(percentage.toString());
-    await this.page.waitForTimeout(500); // Wait for dimension update
+    await this.page.waitForTimeout(500);
   }
 
   async getScale(): Promise<string> {
@@ -55,11 +53,17 @@ export class ImageEnlargerPage extends BasePage {
   }
 
   async getOriginalDimensions(): Promise<string> {
-    return await this.originalDimensionsText.textContent() || '';
+    const fullText = await this.originalDimensionsText.textContent() || '';
+    // Extract "Original: WxH" portion before "→"
+    const parts = fullText.split('→');
+    return parts[0]?.trim() || fullText;
   }
 
   async getNewDimensions(): Promise<string> {
-    return await this.newDimensionsText.textContent() || '';
+    const fullText = await this.originalDimensionsText.textContent() || '';
+    // Extract "New: WxH" portion after "→"
+    const parts = fullText.split('→');
+    return parts[1]?.trim() || fullText;
   }
 
   async clickDownload() {

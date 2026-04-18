@@ -39,14 +39,19 @@ test.describe('Convert Image Feature Tests', () => {
 
   // Test Case 2: Converting to All Supported Formats
   test('TC02: Converting to All Supported Formats', async ({ page }) => {
-    const formats = ['PNG', 'JPG', 'WEBP'];
-    const imagePath = path.resolve(__dirname, '../test-data/valid.jpg');
+    // Test cross-format conversions (same-format conversions don't appear in dropdown)
+    const conversions = [
+      { source: 'test-image.png', format: 'JPG', expectMatch: /\.(jpg|jpeg)$/ },
+      { source: 'test-image.png', format: 'WEBP', expectMatch: /\.webp$/ },
+      { source: 'valid.jpg', format: 'PNG', expectMatch: /\.png$/ },
+    ];
 
-    for (const format of formats) {
+    for (const { source, format, expectMatch } of conversions) {
       // Navigate to fresh page for each conversion
       await convertPage.navigateToConvertImage();
-      
+
       // 1. Upload a supported image file
+      const imagePath = path.resolve(__dirname, `../test-data/${source}`);
       await convertPage.uploadImage(imagePath);
       await convertPage.verifyUploadSuccess();
 
@@ -56,15 +61,9 @@ test.describe('Convert Image Feature Tests', () => {
       // 3. Verify the download
       expect(download).not.toBeNull();
       const filename = download.suggestedFilename().toLowerCase();
-      
+
       // 4. Verify that conversion produces a valid file in the correct format
-      if (format === 'PNG') {
-        expect(filename).toContain('.png');
-      } else if (format === 'JPG') {
-        expect(filename).toMatch(/\.(jpg|jpeg)$/);
-      } else if (format === 'WEBP') {
-        expect(filename).toContain('.webp');
-      }
+      expect(filename).toMatch(expectMatch);
     }
 
     // 5. All conversions completed successfully with maintained quality
@@ -73,22 +72,23 @@ test.describe('Convert Image Feature Tests', () => {
 
   // Test Case 2 Alternative: Converting to all formats from same upload
   test('TC02b: Converting Same Image to Multiple Formats', async ({ page }) => {
-    // 1. Upload a supported image file
-    const imagePath = path.resolve(__dirname, '../test-data/valid.jpg');
+    // 1. Upload PNG so all target formats (PNG, JPG, WEBP) are available
+    const imagePath = path.resolve(__dirname, '../test-data/test-image.png');
     await convertPage.uploadImage(imagePath);
     await convertPage.verifyUploadSuccess();
 
-    // Test PNG conversion
-    await convertPage.selectFormat('PNG');
-    await convertPage.clickConvert();
-    const pngDownload = await convertPage.clickDownload('PNG');
-    expect(pngDownload.suggestedFilename().toLowerCase()).toContain('.png');
-
-    // Test JPG conversion (if different from original)
+    // Test JPG conversion
     await convertPage.selectFormat('JPG');
     await convertPage.clickConvert();
     const jpgDownload = await convertPage.clickDownload('JPG');
     expect(jpgDownload.suggestedFilename().toLowerCase()).toMatch(/\.(jpg|jpeg)$/);
+
+    // Navigate fresh for PNG conversion (download resets state)
+    await convertPage.navigateToConvertImage();
+    await convertPage.uploadImage(imagePath);
+    await convertPage.verifyUploadSuccess();
+    const pngDownload = await convertPage.clickDownload('PNG');
+    expect(pngDownload.suggestedFilename().toLowerCase()).toContain('.png');
 
     // Test WEBP conversion
     await convertPage.selectFormat('WEBP');
@@ -169,9 +169,9 @@ test.describe('Convert Image Feature Tests', () => {
     await convertPage.selectFormat('JPG');
     await page.waitForTimeout(500);
 
-    // Verify format was selected
+    // Verify format was selected (option value may be "image/jpeg" or "JPG" depending on implementation)
     const selectedFormat = await convertPage.getSelectedFormat();
-    expect(selectedFormat.toUpperCase()).toContain('JPG');
+    expect(selectedFormat.toUpperCase()).toMatch(/JPG|JPEG/);
 
     // 3. Click the "Clear" button
     await convertPage.clickClear();

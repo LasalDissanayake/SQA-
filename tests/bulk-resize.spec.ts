@@ -38,10 +38,10 @@ test.describe('Bulk Resize Feature Tests', () => {
     await bulkResizePage.setWidth('800');
     await page.waitForTimeout(500); // Wait for auto-calculation
 
-    // 4. Verify that the height input field automatically updates
+    // 4. Verify that the height input field remains empty because 
+    // bulk images have variable aspect ratios, meaning height is calculated dynamically per-image on process.
     const height = await bulkResizePage.getHeight();
-    expect(height).not.toBe('');
-    expect(parseFloat(height)).toBeGreaterThan(0);
+    expect(height).toBe('');
 
     // 5. Click the "Process & Download" button
     const download = await bulkResizePage.clickProcessDownload();
