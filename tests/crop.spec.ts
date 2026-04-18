@@ -26,6 +26,7 @@ test.describe('PixelsSuite Crop Feature Automations - Advanced', () => {
       if (format === 'webp') formatDisplay = 'WebP';
       const header = page.getByText(`Crop ${formatDisplay}`, { exact: true }).first();
       await expect(header).toBeVisible();
+      await page.screenshot({ path: `test-results/screenshots/crop/TC01-Routing-${format}.png`, fullPage: true });
     }
   });
 
@@ -43,14 +44,12 @@ test.describe('PixelsSuite Crop Feature Automations - Advanced', () => {
       
       // Basic verification that upload hasn't crashed the UI
       await expect(cropPage.clearButton).toBeVisible();
+      await page.screenshot({ path: `test-results/screenshots/crop/TC02-Upload-${format}.png`, fullPage: true });
     }
   });
 
   // TC_03: Verify Upload Boundary Limit
   test('TC03: Verify Upload Boundary Limit (>20MB)', async ({ page }) => {
-    // Marking as fixme: Manual QA reports bug that it uploads successfully,
-    // but Playwright input block prevents this file size natively, skewing test results.
-    test.fixme();
     await cropPage.goto('/crop-png');
     const largeImagePath = path.resolve(__dirname, '../test-data/too-large.png');
     
@@ -59,6 +58,7 @@ test.describe('PixelsSuite Crop Feature Automations - Advanced', () => {
     page.on('dialog', dialog => dialog.accept()); // in case of JS alert
     await cropPage.uploadImage(largeImagePath);
     await cropPage.verifyUploadFailure(); // Should remain "No image yet" or show error toast
+    await page.screenshot({ path: 'test-results/screenshots/crop/TC03-Upload-Boundary-Limit.png', fullPage: true });
   });
 
   // TC_04: Verify Invalid File Type
@@ -68,6 +68,7 @@ test.describe('PixelsSuite Crop Feature Automations - Advanced', () => {
     
     await cropPage.uploadImage(invalidPath);
     await cropPage.verifyUploadFailure();
+    await page.screenshot({ path: 'test-results/screenshots/crop/TC04-Invalid-File-Type.png', fullPage: true });
   });
 
   // TC_05 & TC_06: Real-time Editing and Directional Editing
@@ -87,6 +88,7 @@ test.describe('PixelsSuite Crop Feature Automations - Advanced', () => {
          await page.mouse.move(box.x + box.width / 2 + 50, box.y + box.height / 2 + 50);
          await page.mouse.up();
          // Just moving it shouldn't produce console errors
+         await page.screenshot({ path: 'test-results/screenshots/crop/TC05-06-Realtime-Preview.png', fullPage: true });
        }
     }
   });
@@ -102,6 +104,7 @@ test.describe('PixelsSuite Crop Feature Automations - Advanced', () => {
         await cropPage.yInput.fill('20');
         // We assert these stay filled or DOM box moves. Without precise DOM IDs, just checking input retention safely tests the sync.
         await expect(cropPage.xInput).toHaveValue('10');
+        await page.screenshot({ path: 'test-results/screenshots/crop/TC07-Field-to-Image-Sync.png', fullPage: true });
     }
   });
 
@@ -126,6 +129,7 @@ test.describe('PixelsSuite Crop Feature Automations - Advanced', () => {
          const newX = await cropPage.xInput.inputValue();
          // They shouldn't be the same if actually draggable
         expect(newX).not.toEqual(initialX);
+        await page.screenshot({ path: 'test-results/screenshots/crop/TC08-Image-to-Field-Sync.png', fullPage: true });
        }
     }
   });
@@ -144,6 +148,7 @@ test.describe('PixelsSuite Crop Feature Automations - Advanced', () => {
         // Either shows validation error or snaps back to max
         const newValue = await cropPage.xInput.inputValue();
         expect(newValue).not.toEqual('99999');
+        await page.screenshot({ path: 'test-results/screenshots/crop/TC09-Boundary-Value-Input.png', fullPage: true });
     }
   });
 
@@ -159,6 +164,7 @@ test.describe('PixelsSuite Crop Feature Automations - Advanced', () => {
          cropPage.downloadButton.click()
        ]);
        expect(download.suggestedFilename()).toContain('.png');
+       await page.screenshot({ path: 'test-results/screenshots/crop/TC10-Download-Functionality.png', fullPage: true });
     }
   });
 
@@ -167,6 +173,7 @@ test.describe('PixelsSuite Crop Feature Automations - Advanced', () => {
     await cropPage.goto('/crop-png');
     await cropPage.uploadViaDrop(path.resolve(__dirname, '../test-data/test-image.png'));
     await cropPage.verifyUploadSuccess();
+    await page.screenshot({ path: 'test-results/screenshots/crop/TC11-Drag-Drop.png', fullPage: true });
   });
 
   // TC_12: Clear Functionality
@@ -178,6 +185,7 @@ test.describe('PixelsSuite Crop Feature Automations - Advanced', () => {
     if (await cropPage.clearButton.isVisible()) {
         await cropPage.clearButton.click();
         await cropPage.verifyUploadFailure(); // Should revert to "No image yet."
+        await page.screenshot({ path: 'test-results/screenshots/crop/TC12-Clear-Functionality.png', fullPage: true });
     }
   });
 });
